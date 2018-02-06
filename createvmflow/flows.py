@@ -6,14 +6,21 @@ from viewflow.flow import views as flow_views
 
 from . import models, views
 
+
+@frontend.register
 class CreatevmFlow(Flow):
     process_class = models.CreatevmProcess
-    task_class =    models.CreatvmTask
- 
+    task_class = models.CreatvmTask
+
     start = (
-        flow.Start(flow_views.CreateProcessView,fields=['order_username','cpu_cores','disk_size','memory_size','os_type'])
-            .Permission('createvmflow.can_start_request')
-            .Next(this.assign_approve)
+        flow.Start(flow_views.CreateProcessView, fields=[
+            'username',
+            'cpu_cores',
+            'disk_size',
+            'memory_size',
+            'os_type'])
+        .Permission('createvmflow.can_start_request')
+        .Next(this.assign_approve)
     )
 
     assign_approve = (
@@ -32,11 +39,11 @@ class CreatevmFlow(Flow):
         flow.Handler(this.caculate_approve)
             .Next(this.provision_or_reject)
     )
-    
+
     provision_or_reject = (
-       flow.End() 
+        flow.End()
     )
-    #provision_or_reject = (
+    # provision_or_reject = (
     #    flow.Handler(this.provision)
     #        .Next(this.end)
     #)
@@ -45,5 +52,6 @@ class CreatevmFlow(Flow):
 
     def provision(self, activation, **kwargs):
         pass
+
     def caculate_approve(self, activation, **kwargs):
         pass

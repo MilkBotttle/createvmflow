@@ -18,7 +18,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CreatevmProcess',
             fields=[
-                ('process_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='viewflow.Process')),
+                ('process_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE,
+                                                     parent_link=True, primary_key=True, serialize=False, to='viewflow.Process')),
                 ('username', models.CharField(max_length=150)),
                 ('cpu_cores', models.PositiveIntegerField(default=0)),
                 ('disk_size', models.PositiveIntegerField(default=0)),
@@ -34,9 +35,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ProcessApproverAndAns',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('approve', models.BooleanField(default=True)),
-                ('process', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='createvmflow.CreatevmProcess')),
+                ('process', models.ForeignKey(blank=True, null=True,
+                                              on_delete=django.db.models.deletion.CASCADE, to='createvmflow.CreatevmProcess')),
             ],
         ),
         migrations.CreateModel(
@@ -52,11 +55,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='processapproverandans',
             name='task',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='createvmflow.CreatvmTask'),
+            field=models.ForeignKey(
+                blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='createvmflow.CreatvmTask'),
         ),
         migrations.AddField(
             model_name='processapproverandans',
             name='user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
         ),
     ]
