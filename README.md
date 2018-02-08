@@ -2,18 +2,36 @@
 
 WIP
 
-## Requirement
--  Python3
--  Django==2.0.1
--  django-filter==1.1.0
--  django-material==1.2.0
--  django-viewflow==1.2.0
 ## Install 
+
+### Create virtualenv with python3.6
+```
+wget https://www.python.org/ftp/python/3.6.4/Python-3.6.4.tgz
+tar -zxf Python-3.6.4.tgz
+cd Python-3.6.4
+mkdir pythonroot
+configure --prefix `pwd`/pythonroot
+make
+make install
+cd ~
+virtualenv py36 -p ~/Python-3.6.4/pythonroot/bin/python3
+```
+
+### use py36 env
+activate py36 env
+`source py36/bin/activate`
+
+exit py46 env
+`deactive`
 
 ### Install Requirement
 `pip install -r requirement`
 
-`./manage.py migrate`
+### migrate db and import data
+```
+./manage.py migrate
+./manage.py loaddata fixture/auth.yaml
+```
 
 ## Run Server
 `./manage.py runserver 0:9000`

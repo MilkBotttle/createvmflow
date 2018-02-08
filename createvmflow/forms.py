@@ -6,5 +6,8 @@ class AssignApproverForm(forms.Form):
     users = forms.ModelMultipleChoiceField(queryset=None, required=True)
 
     def __init__(self, *args, **kwargs):
-        self.users = User.objects.filter(group__name='manager')
+
+        super(AssignApproverForm, self).__init__(*args, **kwargs)
+
+        self.users = User.objects.filter(groups__name='Manager')
         self.fields['users'].queryset = self.users

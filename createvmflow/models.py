@@ -31,5 +31,8 @@ class ProcessApproverAndAns(models.Model):
     task = models.ForeignKey(CreatvmTask, blank=True,
                              null=True, on_delete=models.CASCADE)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.SET_NULL)
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL)
     approve = models.BooleanField(default=True)

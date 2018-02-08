@@ -4,7 +4,7 @@ from viewflow import flow, frontend, lock
 from viewflow.base import this, Flow
 from viewflow.flow import views as flow_views
 
-from . import models, views
+from . import models, views, nodes
 
 
 @frontend.register
@@ -26,7 +26,12 @@ class CreatevmFlow(Flow):
     assign_approve = (
         flow.View(views.AssignApproverView)
             .Permission('createvmflow.can_assign_approver')
-            .Next(this.make_approve)
+            .Next(this.make_approver_task)
+    )
+
+    make_approver_task = (
+        nodes.ApproverSplit(this.approvers_handler)
+             .Next(this.make_approve)
     )
 
     make_approve = (
@@ -34,24 +39,42 @@ class CreatevmFlow(Flow):
             .Permission('createvmflow.can_approve_request')
             .Next(this.check_approve)
     )
-
     check_approve = (
-        flow.Handler(this.caculate_approve)
-            .Next(this.provision_or_reject)
+        flow.If(this.caculate_approve)
+            .Then(this.provision_instance)
+            .Else(this.reject)
     )
 
-    provision_or_reject = (
-        flow.End()
+    provision_instance = (
+        flow.Handler(this.provision_fun)
+            .Next(this.end)
     )
-    # provision_or_reject = (
-    #    flow.Handler(this.provision)
-    #        .Next(this.end)
-    #)
+
+    reject = (
+        flow.Handler(this.reject_fun)
+            .Next(this.end)
+    )
 
     end = flow.End()
 
-    def provision(self, activation, **kwargs):
-        pass
+    def provision_fun(self, activation, *args, **kwargs):
 
-    def caculate_approve(self, activation, **kwargs):
-        pass
+        print("Provision request sended")
+
+    def caculate_approve(self, activation):
+        answers = activation.process.processapproverandans_set.all()
+        for ans in answers:
+            if not ans.approve:
+                return False
+        return True
+
+    def reject_fun(self, activation, **kwargs):
+
+        print("Provision request reject")
+
+    def approvers_handler(self, activation):
+        approvers = activation.process.processapproverandans_set.all()
+        users = []
+        for user in approvers:
+            users.append(user.user)
+        return users

@@ -1,0 +1,184 @@
+- model: auth.permission
+  pk: 1
+  fields: {name: Can add log entry, content_type: 1, codename: add_logentry}
+- model: auth.permission
+  pk: 2
+  fields: {name: Can change log entry, content_type: 1, codename: change_logentry}
+- model: auth.permission
+  pk: 3
+  fields: {name: Can delete log entry, content_type: 1, codename: delete_logentry}
+- model: auth.permission
+  pk: 4
+  fields: {name: Can add group, content_type: 2, codename: add_group}
+- model: auth.permission
+  pk: 5
+  fields: {name: Can change group, content_type: 2, codename: change_group}
+- model: auth.permission
+  pk: 6
+  fields: {name: Can delete group, content_type: 2, codename: delete_group}
+- model: auth.permission
+  pk: 7
+  fields: {name: Can add user, content_type: 3, codename: add_user}
+- model: auth.permission
+  pk: 8
+  fields: {name: Can change user, content_type: 3, codename: change_user}
+- model: auth.permission
+  pk: 9
+  fields: {name: Can delete user, content_type: 3, codename: delete_user}
+- model: auth.permission
+  pk: 10
+  fields: {name: Can add permission, content_type: 4, codename: add_permission}
+- model: auth.permission
+  pk: 11
+  fields: {name: Can change permission, content_type: 4, codename: change_permission}
+- model: auth.permission
+  pk: 12
+  fields: {name: Can delete permission, content_type: 4, codename: delete_permission}
+- model: auth.permission
+  pk: 13
+  fields: {name: Can add content type, content_type: 5, codename: add_contenttype}
+- model: auth.permission
+  pk: 14
+  fields: {name: Can change content type, content_type: 5, codename: change_contenttype}
+- model: auth.permission
+  pk: 15
+  fields: {name: Can delete content type, content_type: 5, codename: delete_contenttype}
+- model: auth.permission
+  pk: 16
+  fields: {name: Can add session, content_type: 6, codename: add_session}
+- model: auth.permission
+  pk: 17
+  fields: {name: Can change session, content_type: 6, codename: change_session}
+- model: auth.permission
+  pk: 18
+  fields: {name: Can delete session, content_type: 6, codename: delete_session}
+- model: auth.permission
+  pk: 19
+  fields: {name: Can add module, content_type: 7, codename: add_module}
+- model: auth.permission
+  pk: 20
+  fields: {name: Can change module, content_type: 7, codename: change_module}
+- model: auth.permission
+  pk: 21
+  fields: {name: Can delete module, content_type: 7, codename: delete_module}
+- model: auth.permission
+  pk: 22
+  fields: {name: Can add Task, content_type: 8, codename: add_task}
+- model: auth.permission
+  pk: 23
+  fields: {name: Can change Task, content_type: 8, codename: change_task}
+- model: auth.permission
+  pk: 24
+  fields: {name: Can delete Task, content_type: 8, codename: delete_task}
+- model: auth.permission
+  pk: 25
+  fields: {name: Can add Process, content_type: 9, codename: add_process}
+- model: auth.permission
+  pk: 26
+  fields: {name: Can change Process, content_type: 9, codename: change_process}
+- model: auth.permission
+  pk: 27
+  fields: {name: Can delete Process, content_type: 9, codename: delete_process}
+- model: auth.permission
+  pk: 28
+  fields: {name: Can view Process, content_type: 9, codename: view_process}
+- model: auth.permission
+  pk: 29
+  fields: {name: Can manage Process, content_type: 9, codename: manage_process}
+- model: auth.permission
+  pk: 30
+  fields: {name: Can add creatvm task, content_type: 8, codename: add_creatvmtask}
+- model: auth.permission
+  pk: 31
+  fields: {name: Can change creatvm task, content_type: 8, codename: change_creatvmtask}
+- model: auth.permission
+  pk: 32
+  fields: {name: Can delete creatvm task, content_type: 8, codename: delete_creatvmtask}
+- model: auth.permission
+  pk: 33
+  fields: {name: Can add process approver and ans, content_type: 10, codename: add_processapproverandans}
+- model: auth.permission
+  pk: 34
+  fields: {name: Can change process approver and ans, content_type: 10, codename: change_processapproverandans}
+- model: auth.permission
+  pk: 35
+  fields: {name: Can delete process approver and ans, content_type: 10, codename: delete_processapproverandans}
+- model: auth.permission
+  pk: 36
+  fields: {name: Can add createvm process, content_type: 11, codename: add_createvmprocess}
+- model: auth.permission
+  pk: 37
+  fields: {name: Can change createvm process, content_type: 11, codename: change_createvmprocess}
+- model: auth.permission
+  pk: 38
+  fields: {name: Can delete createvm process, content_type: 11, codename: delete_createvmprocess}
+- model: auth.permission
+  pk: 39
+  fields: {name: Can start createvm request, content_type: 11, codename: can_start_request}
+- model: auth.permission
+  pk: 40
+  fields: {name: Can assign approver, content_type: 11, codename: can_assign_approver}
+- model: auth.permission
+  pk: 41
+  fields: {name: Can approve request, content_type: 11, codename: can_approve_request}
+- model: auth.permission
+  pk: 42
+  fields: {name: Can view createvm process, content_type: 11, codename: view_createvmprocess}
+- model: auth.permission
+  pk: 43
+  fields: {name: Can manage createvm process, content_type: 11, codename: manage_createvmprocess}
+- model: auth.group
+  pk: 1
+  fields:
+    name: Manager
+    permissions: [41, 40, 42]
+- model: auth.group
+  pk: 2
+  fields:
+    name: User
+    permissions: [39, 42]
+- model: auth.user
+  pk: 1
+  fields:
+    password: pbkdf2_sha256$100000$XajMCrwTDpwQ$WPmHUCyc2nIpV74QZSJf/i8gFzbX6P0a+mmQ4LXS37c=
+    last_login: 2018-02-08 06:58:56.812154+00:00
+    is_superuser: true
+    username: admin
+    first_name: ''
+    last_name: ''
+    email: admin@admin.com
+    is_staff: true
+    is_active: true
+    date_joined: 2018-02-06 02:58:51.784689+00:00
+    groups: []
+    user_permissions: []
+- model: auth.user
+  pk: 2
+  fields:
+    password: pbkdf2_sha256$100000$hl1sHiBKNl60$AdS425goPhn1ZSYvYfLR2q9ePyjgM00ayECtrsMkZ+k=
+    last_login: 2018-02-08 06:59:13.831765+00:00
+    is_superuser: false
+    username: manager
+    first_name: ''
+    last_name: ''
+    email: manager@manager.com
+    is_staff: false
+    is_active: true
+    date_joined: 2018-02-06 08:17:01+00:00
+    groups: [1]
+    user_permissions: []
+- model: auth.user
+  pk: 3
+  fields:
+    password: pbkdf2_sha256$100000$R5MWS9mmhLjs$zi4oEC5tU2YsU3lcnGd2akuHxlhmVhA2aAJXcWfNwo8=
+    last_login: 2018-02-08 07:10:56.675754+00:00
+    is_superuser: false
+    username: user
+    first_name: ''
+    last_name: ''
+    email: user@user.com
+    is_staff: false
+    is_active: true
+    date_joined: 2018-02-06 08:17:17+00:00
+    groups: [2]
+    user_permissions: []
