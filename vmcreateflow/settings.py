@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'viewflow',
     'viewflow.frontend',
     'createvmflow',
+    'subprocessflow',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
