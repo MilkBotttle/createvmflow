@@ -17,11 +17,13 @@ cd ~
 virtualenv py36 -p ~/Python-3.6.4/pythonroot/bin/python3
 ```
 
-### use py36 env
-activate py36 env
+### Use py36 env
+Activate py36 env
+
 `source py36/bin/activate`
 
-exit py46 env
+Exit py46 env
+
 `deactive`
 
 ### Install Requirement
