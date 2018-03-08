@@ -3,38 +3,52 @@ from viewflow import mixins, Event, ThisObject
 from django.utils.decorators import method_decorator
 from viewflow.decorators import flow_start_func
 from viewflow.flow import views
+from viewflow import Task
 # Subprocess    
 class SubProcessActivation(Activation):
-    """Inhir funcactivation"""
-    def prep_subprocess(self):
-        self._subflow = self.flow_task.subflow
+    """
+    .. graphviz::
+       
+       digraph status {
+            UNPRIE;
+            NEW -> CANCELED [label="cancel"]
+            NEW -> PREPARED [label="prepare"]
+            PREPARED -> INSUBPROGRESS [label="progress"]
+            INSUBPROCESS -> DONE [label="done"]
+            DONE -> NEW [label="undo"]
+            {rank = min;NEW}            
+       }
+    """
+    
+    @Activation.status.transition(source=STATUS.NEW, target=STATUS.PREPARED)
+    def prepare(self):
+        if self.task.started is None:
+            self.task.started = now()
 
-    @Activation.status.transition(source=STATUS.NEW)
-    def perform(self):
+    @Activation.status.transition(source=STATUS.PREPARED, target=STATUS.INSUBPROGRESS)
+    def progress(self):
         """Perform the subprocess"""
-
         self.task.started = now()
 
         signals.task_started.send(
             sender=self.flow_class,
             process=self.process,
             task=self.task)
-        #run subprocess activate
-        self._subflow.start(self.process, self.task)
-        #sub_activation = self._subflow.start(self.parent_process)
- 
-#        self.set_status(STATUS.DONE)
-#        self.task.save()
-#
-#        signals.task_finished.send(
-#            sender=self.flow_class,
-#            process=self.process,
-#            task=self.task)
 
-#        self.activate_next()
-            
+        #start subprocess 
+        self.flow_task._subprocess_start.start(self.process, self.task)
+
+    @Activation.status.transition(source=STATUS.DONE, conditions=[all_leading_canceled])
     def activate_next(self):
         """Activate all outgoing edges."""
+
+        if self.flow_task._next:
+            self.flow_task._next.activate(
+                prev_activation=self, token=self.task.token)
+
+    @Activation.status.transition(source=STATUS.INSUBPROGRESS, target=STATUS.DONE)
+    def done(self):
+        self.task.finished = now()
         self.set_status(STATUS.DONE)
         self.task.save()
 
@@ -42,30 +56,38 @@ class SubProcessActivation(Activation):
             sender=self.flow_class,
             process=self.process,
             task=self.task)
-        if self.flow_task._next:
-            self.flow_task._next.activate(
-                prev_activation=self, token=self.task.token)
 
+        self.activate_next()
     @classmethod
     def activate(cls, flow_task, prev_activation, token):
+        """
+            new a task
+            return activation
+            
+        """
         task = flow_task.flow_class.task_class(
             process=prev_activation.process,
             flow_task=flow_task,
             token=token)
+
         task.save()
         task.previous.add(prev_activation.task)
 
         activation = cls()
         activation.initialize(flow_task, task)
-        activation.prep_subprocess()
-        activation.perform()
+        activation.prepare()
+        activation.progress()
 
         return activation
 
     def is_done(self):
-        subprocess_class = self.flow_task.subflow.flow_class.process_class
+        subprocess_class = self.flow_task._subprocess_start.flow_class.process_class
         subprocesses = subprocess_class._default_manager.filter(parent_task=self.task).exclude(status=STATUS.DONE).exists()
         return not subprocesses
+    
+    @Activation.status.transition(source=STATUS.DONE, target=STATUS.NEW)
+    def undo(self):
+        pass
 
 class SubProcess(mixins.TaskDescriptionMixin,
                  mixins.NextNodeMixin,
@@ -73,10 +95,10 @@ class SubProcess(mixins.TaskDescriptionMixin,
                  mixins.UndoViewMixin,
                  mixins.CancelViewMixin,
                  mixins.PerformViewMixin,
-                 Event):
+                 Task):
     """
         start_sub = (
-            SubProcess(sub_flow)
+            SubProcess(subprocess.start)
                 .Next(this.end)
         )
     """
@@ -88,8 +110,13 @@ class SubProcess(mixins.TaskDescriptionMixin,
     perform_view_class = views.PerformTaskView
     undo_view_class = views.UndoTaskView
 
-    def __init__(self, subflow, **kwargs):
-        self.subflow = subflow        
+    def __init__(self, subprocess_start, **kwargs):
+        """
+        Instantiate a SubProcess node.
+        
+        :keyword subprocess_start: A StarSubProcess task
+        """
+        self._subprocess_start = subprocess_start
         super(SubProcess, self).__init__(**kwargs)
 
     def on_subprocess_end(self, **signal_kwargs):
@@ -99,24 +126,63 @@ class SubProcess(mixins.TaskDescriptionMixin,
             activation = self.activation_class()              
             activation.initialize(self, process.parent_task)
             if activation.is_done():
-                activation.activate_next()                           
+                activation.done()
+
     
     def ready(self, **singnal_args):
-        signals.flow_finished.connect(self.on_subprocess_end, sender=self.subflow.flow_class) 
+        """
+            connect subprocess finished signal to here
+        """
+        signals.flow_finished.connect(self.on_subprocess_end, sender=self._subprocess_start.flow_class) 
 
 class StartSubProcessActivaton(StartActivation):
     """ Start a new subprocess """
     @Activation.status.transition(source=STATUS.NEW, target=STATUS.PREPARED)
     def prepare(self,parent_process,parent_task):
+#        import ipdb
+#        ipdb.set_trace()
         if self.task.started is None:
             self.task.started = now()
         self.process.parent_process = parent_process
         self.process.parent_task = parent_task
 
+    @Activation.status.transition(source=STATUS.DONE, conditions=[all_leading_canceled])
     def activate_next(self):
         if self.flow_task._next:
             self.flow_task._next.activate(
-                prev_activation=self, token=self.task.token)        
+                prev_activation=self, token=self.task.token)
+
+    @Activation.status.transition(source=STATUS.PREPARED, target=STATUS.DONE)
+    def done(self):
+        """Should be the last call in the function."""
+     
+        with transaction.atomic(savepoint=True):
+            signals.task_started.send(
+                sender=self.flow_class,
+                process=self.process,
+                task=self.task)
+            self.process.save() 
+            
+            import ipdb
+            ipdb.set_trace()   
+            lock_impl = self.flow_class.lock_impl(self.flow_class.instance)
+            self.lock = lock_impl(self.flow_class, self.process.pk)
+            self.lock.__enter__()
+
+            self.task.process = self.process
+            self.task.finished = now()
+            self.task.save()
+
+            signals.task_finished.send(
+                sender=self.flow_class,
+                process=self.process,
+                task=self.task)
+            signals.flow_started.send(
+                sender=self.flow_class,
+                process=self.process,
+                task=self.task)
+
+            self.activate_next()
 
     @Activation.status.super()
     def initialize(self, flow_task, task):
@@ -157,25 +223,20 @@ class StartSubProcess(mixins.TaskDescriptionMixin,
 
     @method_decorator(flow_start_func)
     def start_func_default(self, activation, *args):
+        """ Start a new process and record parent info """
         self.parent_process = args[0]
         self.parent_task = args[1]
         activation.prepare(self.parent_process, self.parent_task)
         activation.done()
         return activation
 
-    def on_flow_finished(self, **signal_kwargs):
-        process = signal_kwargs['process']
-
-        if process.parent_task:
-            activation = self.activation_cls()
-            activation.initialize(self, process.parent_task)
-            if activation.is_done():
-                activation.done()
-
     def start(self, parent_process, parent_task, *args, **kwargs):
        """ run fun initilize activation"""
        return self.func(self, parent_process, parent_task, *args, **kwargs)
 
     def ready(self):
+        """
+           Resolbe this relationship 
+        """
         if isinstance(self.func, ThisObject):
             self.func = getattr(self.flow_class.instance, self.func.name)
