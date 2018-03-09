@@ -25,17 +25,17 @@ class SubProcessActivation(Activation):
         if self.task.started is None:
             self.task.started = now()
 
-    @Activation.status.transition(source=STATUS.PREPARED, target=STATUS.INSUBPROGRESS)
-    def progress(self):
-        """Perform the subprocess"""
-        self.task.started = now()
-
         signals.task_started.send(
             sender=self.flow_class,
             process=self.process,
             task=self.task)
 
+    @Activation.status.transition(source=STATUS.PREPARED, target=STATUS.INSUBPROGRESS)
+    def progress(self):
+        """Perform the subprocess"""
         #start subprocess 
+        self.process.status = STATUS.INSUBPROGRESS
+        self.process.save()
         self.flow_task._subprocess_start.start(self.process, self.task)
 
     @Activation.status.transition(source=STATUS.DONE, conditions=[all_leading_canceled])
@@ -58,6 +58,7 @@ class SubProcessActivation(Activation):
             task=self.task)
 
         self.activate_next()
+
     @classmethod
     def activate(cls, flow_task, prev_activation, token):
         """
@@ -77,10 +78,12 @@ class SubProcessActivation(Activation):
         activation.initialize(flow_task, task)
         activation.prepare()
         activation.progress()
-
         return activation
 
     def is_done(self):
+        """
+            Check all subprocess are 'DONE', return boolean
+        """
         subprocess_class = self.flow_task._subprocess_start.flow_class.process_class
         subprocesses = subprocess_class._default_manager.filter(parent_task=self.task).exclude(status=STATUS.DONE).exists()
         return not subprocesses
@@ -121,13 +124,14 @@ class SubProcess(mixins.TaskDescriptionMixin,
 
     def on_subprocess_end(self, **signal_kwargs):
         process = signal_kwargs['process']                  
-                                                            
+
         if process.parent_task:                             
             activation = self.activation_class()              
             activation.initialize(self, process.parent_task)
             if activation.is_done():
+                #Cameron.c : set the status to insubprogress to transition
+                activation.set_status(STATUS.INSUBPROGRESS)
                 activation.done()
-
     
     def ready(self, **singnal_args):
         """
@@ -137,10 +141,9 @@ class SubProcess(mixins.TaskDescriptionMixin,
 
 class StartSubProcessActivaton(StartActivation):
     """ Start a new subprocess """
+
     @Activation.status.transition(source=STATUS.NEW, target=STATUS.PREPARED)
     def prepare(self,parent_process,parent_task):
-#        import ipdb
-#        ipdb.set_trace()
         if self.task.started is None:
             self.task.started = now()
         self.process.parent_process = parent_process
@@ -151,49 +154,6 @@ class StartSubProcessActivaton(StartActivation):
         if self.flow_task._next:
             self.flow_task._next.activate(
                 prev_activation=self, token=self.task.token)
-
-    @Activation.status.transition(source=STATUS.PREPARED, target=STATUS.DONE)
-    def done(self):
-        """Should be the last call in the function."""
-     
-        with transaction.atomic(savepoint=True):
-            signals.task_started.send(
-                sender=self.flow_class,
-                process=self.process,
-                task=self.task)
-            self.process.save() 
-            
-            import ipdb
-            ipdb.set_trace()   
-            lock_impl = self.flow_class.lock_impl(self.flow_class.instance)
-            self.lock = lock_impl(self.flow_class, self.process.pk)
-            self.lock.__enter__()
-
-            self.task.process = self.process
-            self.task.finished = now()
-            self.task.save()
-
-            signals.task_finished.send(
-                sender=self.flow_class,
-                process=self.process,
-                task=self.task)
-            signals.flow_started.send(
-                sender=self.flow_class,
-                process=self.process,
-                task=self.task)
-
-            self.activate_next()
-
-    @Activation.status.super()
-    def initialize(self, flow_task, task):
-        """ Initialize an activation. """
-        self.lock = None 
-        self.flow_task, self.flow_class = flow_task, flow_task.flow_class
-
-        self.process = self.flow_class.process_class(
-            flow_class=self.flow_class)  
-        self.task = self.flow_class.task_class(flow_task=self.flow_task)        
-        
 
 class StartSubProcess(mixins.TaskDescriptionMixin,
                       mixins.NextNodeMixin,
