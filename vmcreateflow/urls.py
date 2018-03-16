@@ -19,9 +19,13 @@ from django.views import generic
 from django.conf.urls import include, url
 from material.frontend import urls as frontend_urls
 
+from rest_framework_swagger.views import get_swagger_view
 
+api_view = get_swagger_view(title='workflow API')
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^$', generic.RedirectView.as_view(url='/workflow/', permanent=False)),
     url(r'', include(frontend_urls)),
+    url(r'', include('api.urls')),
+    url(r'^api-swagger/',api_view),
 ]
