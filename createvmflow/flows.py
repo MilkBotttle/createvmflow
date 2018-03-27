@@ -3,10 +3,10 @@ from django.utils.translation import ugettext_lazy as _
 from viewflow import flow, frontend, lock
 from viewflow.base import this, Flow
 from viewflow.flow import views as flow_views
-
+import api
 from . import models, views, nodes
 
-
+@api.register
 @frontend.register
 class CreatevmFlow(Flow):
     process_class = models.CreatevmProcess

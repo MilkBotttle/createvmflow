@@ -27,6 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+#REST_FRAMEWORK = {
+#    'DEFAULT_PARSER_CLASSES': (
+#        'rest_framework.parsers.JSONParser',
+#    )
+#}
+
 
 # Application definition
 

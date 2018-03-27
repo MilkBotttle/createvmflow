@@ -9,7 +9,10 @@ api_view = get_swagger_view(title='workflow API')
 router = DefaultRouter()
 router.register(r'process', views.ProcessViewSet)
 
+
 urlpatterns = [
     re_path(r'^api/', include(router.urls)),
+    re_path(r'^api/flows', views.flow_list),
+#    re_path(r'^api/tt', views.RestCreateProcessView.as_view()),
 
 ]
